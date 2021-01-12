@@ -15,7 +15,7 @@ public class FlowField : MonoBehaviour
     Cell[,,] cells;
     public Cell destinationCell;
 
-    Vector3Int flowFieldSize;
+    Vector3Int flowFieldGridSize;
     Vector3 flowFieldBottomLeft;
 
     float cellDiameter;
@@ -23,9 +23,9 @@ public class FlowField : MonoBehaviour
     void Start()
     {
         cellDiameter = cellRadius * 2;
-        flowFieldSize.x = Mathf.CeilToInt(flowFieldWorldSize.x / cellDiameter);
-        flowFieldSize.y = Mathf.CeilToInt(flowFieldWorldSize.y / cellDiameter);
-        flowFieldSize.z = Mathf.CeilToInt(flowFieldWorldSize.z / cellDiameter);
+        flowFieldGridSize.x = Mathf.CeilToInt(flowFieldWorldSize.x / cellDiameter);
+        flowFieldGridSize.y = Mathf.CeilToInt(flowFieldWorldSize.y / cellDiameter);
+        flowFieldGridSize.z = Mathf.CeilToInt(flowFieldWorldSize.z / cellDiameter);
 
         CreateCellGrid();
         CreateCostField();
@@ -37,17 +37,17 @@ public class FlowField : MonoBehaviour
 
     void CreateCellGrid()
     {
-        cells = new Cell[flowFieldSize.x, flowFieldSize.y, flowFieldSize.z];
+        cells = new Cell[flowFieldGridSize.x, flowFieldGridSize.y, flowFieldGridSize.z];
         flowFieldBottomLeft = transform.position;
         flowFieldBottomLeft -= Vector3.right * flowFieldWorldSize.x / 2;
         flowFieldBottomLeft -= Vector3.up * flowFieldWorldSize.y / 2;
         flowFieldBottomLeft -= Vector3.forward * flowFieldWorldSize.z / 2;
 
-        for (int x = 0; x < flowFieldSize.x; x++)
+        for (int x = 0; x < flowFieldGridSize.x; x++)
         {
-            for (int y = 0; y < flowFieldSize.y; y++)
+            for (int y = 0; y < flowFieldGridSize.y; y++)
             {
-                for (int z = 0; z < flowFieldSize.z; z++)
+                for (int z = 0; z < flowFieldGridSize.z; z++)
                 {
                     Vector3 cellWorldPos = flowFieldBottomLeft;
                     cellWorldPos += Vector3.right * (x * cellDiameter + cellRadius);
@@ -93,9 +93,8 @@ public class FlowField : MonoBehaviour
             List<Cell> curNeighbors = GetAdjacentCells(currentCell);
             foreach(Cell neighbor in curNeighbors)
             {
-                if (neighbor.cost == byte.MaxValue)
+                if (!IsCellTraverseable(neighbor))
                 {
-                    // impassible
                     continue;
                 }
                 if (neighbor.cost + currentCell.bestCost < neighbor.bestCost)
@@ -110,6 +109,11 @@ public class FlowField : MonoBehaviour
     {
         foreach(Cell cell in cells)
         {
+            if (!IsCellTraverseable(cell))
+            {
+                continue;
+            }
+
             uint lowestBestCost = uint.MaxValue;
             Cell bestNeighbor = null;
 
@@ -137,9 +141,9 @@ public class FlowField : MonoBehaviour
         Vector3 bottomLeftToWorldPos = _worldPos - bottomLeftCellPos;
 
         int x, y, z;
-        x = Mathf.Clamp(Mathf.RoundToInt(bottomLeftToWorldPos.x / cellDiameter), 0, flowFieldSize.x - 1);
-        y = Mathf.Clamp(Mathf.RoundToInt(bottomLeftToWorldPos.y / cellDiameter), 0, flowFieldSize.y - 1);
-        z = Mathf.Clamp(Mathf.RoundToInt(bottomLeftToWorldPos.z / cellDiameter), 0, flowFieldSize.z - 1);
+        x = Mathf.Clamp(Mathf.RoundToInt(bottomLeftToWorldPos.x / cellDiameter), 0, flowFieldGridSize.x - 1);
+        y = Mathf.Clamp(Mathf.RoundToInt(bottomLeftToWorldPos.y / cellDiameter), 0, flowFieldGridSize.y - 1);
+        z = Mathf.Clamp(Mathf.RoundToInt(bottomLeftToWorldPos.z / cellDiameter), 0, flowFieldGridSize.z - 1);
         return cells[x, y, z];
     }
     public List<Cell> GetAdjacentCells(Cell _cellToGetNeighborsOf)
@@ -170,19 +174,40 @@ public class FlowField : MonoBehaviour
     }
     bool IsCellPosWithinBounds(Vector3Int _cellPos)
     {
-        if (_cellPos.x < 0 || _cellPos.x >= flowFieldSize.x)
+        if (_cellPos.x < 0 || _cellPos.x >= flowFieldGridSize.x)
         {
             return false;
         }
-        if (_cellPos.y < 0 || _cellPos.y >= flowFieldSize.y)
+        if (_cellPos.y < 0 || _cellPos.y >= flowFieldGridSize.y)
         {
             return false;
         }
-        if (_cellPos.z < 0 || _cellPos.z >= flowFieldSize.z)
+        if (_cellPos.z < 0 || _cellPos.z >= flowFieldGridSize.z)
         {
             return false;
         }
         return true;
+    }
+    bool IsCellTraverseable(Cell _cellToCheck)
+    {
+        return _cellToCheck.cost == byte.MaxValue;
+    }
+    public Cell GetRandomTraverseableCell(int maxAttempts = 10)
+    {
+        Cell cellToReturn = null;
+        Vector3Int randomCellIndex = new Vector3Int();
+        for(int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            randomCellIndex.x = Random.Range(0, flowFieldGridSize.x - 1);
+            randomCellIndex.y = Random.Range(0, flowFieldGridSize.y - 1);
+            randomCellIndex.z = Random.Range(0, flowFieldGridSize.z - 1);
+
+            if (IsCellTraverseable(cells[randomCellIndex.x, randomCellIndex.y, randomCellIndex.z]))
+            {
+                return cells[randomCellIndex.x, randomCellIndex.y, randomCellIndex.z];
+            }
+        }
+        return cellToReturn;
     }
 
     void OnDrawGizmos()
