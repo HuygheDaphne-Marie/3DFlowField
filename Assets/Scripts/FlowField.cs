@@ -7,10 +7,13 @@ public class FlowField : MonoBehaviour
     // TEMP
     public GameObject player;
 
-    public LayerMask NonTraverseableMask;
+    public LayerMask nonTraverseableMask;
+    public LayerMask difficultTerrainMask;
+
     public Vector3 flowFieldWorldSize;
     public float cellRadius;
     Cell[,,] cells;
+    public Cell destinationCell;
 
     Vector3Int flowFieldSize;
     Vector3 flowFieldBottomLeft;
@@ -25,6 +28,7 @@ public class FlowField : MonoBehaviour
         flowFieldSize.z = Mathf.CeilToInt(flowFieldWorldSize.z / cellDiameter);
 
         CreateFlowField();
+        CreateCostField();
     }
 
     void CreateFlowField()
@@ -46,25 +50,65 @@ public class FlowField : MonoBehaviour
                     cellWorldPos += Vector3.up * (y * cellDiameter + cellRadius);
                     cellWorldPos += Vector3.forward * (z * cellDiameter + cellRadius);
 
-                    byte cost = 0; // TODO: move to cell, so it can handle cost calculation
-                    bool traverseable = !(Physics.CheckSphere(cellWorldPos, cellRadius, NonTraverseableMask));
-                    if(!traverseable)
-                    {
-                        cost = 255;
-                    }
-
                     Vector3Int cellsPos = new Vector3Int(x, y, z);
-                    cells[x, y, z] = new Cell(cellWorldPos, cellsPos, cost);
+                    cells[x, y, z] = new Cell(cellWorldPos, cellsPos);
                 }
             }
         }
 
     }
+    void CreateCostField()
+    {
+        byte difficultTerrainCost = 3;
 
-    public Cell CellFromWorldPos(Vector3 worldPos)
+        foreach(Cell cell in cells)
+        {
+            if (Physics.CheckSphere(cell.worldPos, cellRadius, nonTraverseableMask))
+            {
+                cell.IncreaseCost(byte.MaxValue);
+            }
+            else if (Physics.CheckSphere(cell.worldPos, cellRadius, difficultTerrainMask))
+            {
+                cell.IncreaseCost(difficultTerrainCost);
+            }
+        }
+    }
+    void CreateIntegrationField(Cell _destinationCell)
+    {
+        destinationCell = _destinationCell;
+
+        destinationCell.cost = 0;
+        destinationCell.bestCost = 0;
+
+        Queue<Cell> openQueue = new Queue<Cell>();
+        openQueue.Enqueue(destinationCell);
+
+        while (openQueue.Count > 0)
+        {
+            Cell currentCell = openQueue.Dequeue();
+            List<Cell> curNeighbors = GetAdjacentCells(currentCell);
+            foreach(Cell neighbor in curNeighbors)
+            {
+                if (neighbor.cost == byte.MaxValue)
+                {
+                    // impassible
+                    continue;
+                }
+                if (neighbor.cost + currentCell.cost < neighbor.bestCost)
+                {
+                    neighbor.bestCost = (uint)(neighbor.cost + currentCell.cost);
+                    openQueue.Enqueue(neighbor);
+                }
+            }
+        }
+    }
+
+
+
+    public Cell CellFromWorldPos(Vector3 _worldPos)
     {
         Vector3 bottomLeftCellPos = flowFieldBottomLeft + Vector3.one * cellRadius;
-        Vector3 bottomLeftToWorldPos = worldPos - bottomLeftCellPos;
+        Vector3 bottomLeftToWorldPos = _worldPos - bottomLeftCellPos;
 
         int x, y, z;
         x = Mathf.Clamp(Mathf.RoundToInt(bottomLeftToWorldPos.x / cellDiameter), 0, flowFieldSize.x - 1);
@@ -72,18 +116,43 @@ public class FlowField : MonoBehaviour
         z = Mathf.Clamp(Mathf.RoundToInt(bottomLeftToWorldPos.z / cellDiameter), 0, flowFieldSize.z - 1);
         return cells[x, y, z];
     }
-
-    bool IsCellPosWithinBounds(Vector3Int cellPos)
+    public List<Cell> GetAdjacentCells(Cell _cellToGetNeighborsOf)
     {
-        if (cellPos.x < 0 || cellPos.x >= flowFieldSize.x)
+        List<Cell> neighbours = new List<Cell>();
+
+        Vector3Int oldCoords = _cellToGetNeighborsOf.coordinates;
+
+        Vector3Int bottomLeftBack = new Vector3Int(oldCoords.x - 1, oldCoords.y - 1, oldCoords.z - 1);
+        Vector3Int topRightFront = new Vector3Int(oldCoords.x + 1, oldCoords.y + 1, oldCoords.z + 1);
+
+        for (int x = bottomLeftBack.x; x < topRightFront.x; x++)
+        {
+            for (int y = bottomLeftBack.y; y < topRightFront.y; y++)
+            {
+                for (int z = bottomLeftBack.z; z < topRightFront.z; z++)
+                {
+                    Vector3Int neighborCoords = new Vector3Int(x, y, z);
+                    if (IsCellPosWithinBounds(neighborCoords))
+                    {
+                        neighbours.Add(cells[x, y, z]);
+                    }
+                }
+            }
+        }
+
+        return neighbours;
+    }
+    bool IsCellPosWithinBounds(Vector3Int _cellPos)
+    {
+        if (_cellPos.x < 0 || _cellPos.x >= flowFieldSize.x)
         {
             return false;
         }
-        if (cellPos.y < 0 || cellPos.y >= flowFieldSize.y)
+        if (_cellPos.y < 0 || _cellPos.y >= flowFieldSize.y)
         {
             return false;
         }
-        if (cellPos.z < 0 || cellPos.z >= flowFieldSize.z)
+        if (_cellPos.z < 0 || _cellPos.z >= flowFieldSize.z)
         {
             return false;
         }
@@ -103,7 +172,7 @@ public class FlowField : MonoBehaviour
                 Color cellColor = Color.white;
                 cellColor.a = 0.001f;
 
-                if (cell.cost == 255)
+                if (cell.cost == byte.MaxValue)
                 {
                     cellColor = Color.red;
                 }

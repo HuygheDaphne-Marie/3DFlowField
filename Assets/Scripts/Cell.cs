@@ -5,13 +5,33 @@ using UnityEngine;
 public class Cell
 {
     public Vector3 worldPos;
-    public Vector3Int gridCoordinates;
-    public byte cost;
+    public Vector3Int coordinates;
 
-    public Cell(Vector3 _worldpos, Vector3Int _gridCoords, byte _cost)
+    public byte cost;
+    public uint bestCost; 
+
+    public Cell(Vector3 _worldpos, Vector3Int _gridCoords)
     {
         worldPos = _worldpos;
-        gridCoordinates = _gridCoords;
-        cost = _cost;
+        coordinates = _gridCoords;
+        cost = 1;
+        bestCost = uint.MaxValue;
+    }
+
+    public void IncreaseCost(byte _amount)
+    {
+        if (cost == byte.MaxValue)
+        {
+            return;
+        }
+
+        if (cost + _amount > byte.MaxValue)
+        {
+            cost = byte.MaxValue;
+        }
+        else
+        {
+            cost += _amount;
+        }
     }
 }
