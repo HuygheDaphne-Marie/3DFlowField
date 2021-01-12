@@ -8,7 +8,8 @@ public class Cell
     public Vector3Int coordinates;
 
     public byte cost;
-    public uint bestCost; 
+    public uint bestCost;
+    public Vector3 bestDirection;
 
     public Cell(Vector3 _worldpos, Vector3Int _gridCoords)
     {
@@ -16,6 +17,7 @@ public class Cell
         coordinates = _gridCoords;
         cost = 1;
         bestCost = uint.MaxValue;
+        bestDirection = Vector3.zero;
     }
 
     public void IncreaseCost(byte _amount)

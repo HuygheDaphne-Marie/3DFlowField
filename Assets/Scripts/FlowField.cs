@@ -27,14 +27,15 @@ public class FlowField : MonoBehaviour
         flowFieldSize.y = Mathf.CeilToInt(flowFieldWorldSize.y / cellDiameter);
         flowFieldSize.z = Mathf.CeilToInt(flowFieldWorldSize.z / cellDiameter);
 
-        CreateFlowField();
+        CreateCellGrid();
         CreateCostField();
 
         // TEMP
         CreateIntegrationField(CellFromWorldPos(player.transform.position));
+        CreateFlowField();
     }
 
-    void CreateFlowField()
+    void CreateCellGrid()
     {
         cells = new Cell[flowFieldSize.x, flowFieldSize.y, flowFieldSize.z];
         flowFieldBottomLeft = transform.position;
@@ -105,7 +106,29 @@ public class FlowField : MonoBehaviour
             }
         }
     }
+    void CreateFlowField()
+    {
+        foreach(Cell cell in cells)
+        {
+            uint lowestBestCost = uint.MaxValue;
+            Cell bestNeighbor = null;
 
+            List<Cell> neighbors = GetAdjacentCells(cell);
+            foreach(Cell neighbor in neighbors)
+            {
+                if (neighbor.bestCost < lowestBestCost)
+                {
+                    lowestBestCost = neighbor.bestCost;
+                    bestNeighbor = neighbor;
+                }
+            }
+
+            if (bestNeighbor != null)
+            {
+                cell.bestDirection = (bestNeighbor.worldPos - cell.worldPos).normalized;
+            }
+        }
+    }
 
 
     public Cell CellFromWorldPos(Vector3 _worldPos)
@@ -135,7 +158,7 @@ public class FlowField : MonoBehaviour
                 for (int z = bottomLeftBack.z; z < topRightFront.z; z++)
                 {
                     Vector3Int neighborCoords = new Vector3Int(x, y, z);
-                    if (IsCellPosWithinBounds(neighborCoords))
+                    if (neighborCoords != _cellToGetNeighborsOf.coordinates && IsCellPosWithinBounds(neighborCoords))
                     {
                         neighbours.Add(cells[x, y, z]);
                     }
@@ -199,6 +222,10 @@ public class FlowField : MonoBehaviour
                 Gizmos.color = cellColor;
 
                 Gizmos.DrawCube(cell.worldPos, Vector3.one * (cellDiameter - 0.1f));
+
+                //Gizmos.color = Color.cyan;
+                //Gizmos.DrawLine(cell.worldPos, cell.worldPos + (cell.bestDirection * 0.1f)); 
+                // seems to not draw a line for each cell? might be reaching some cap of drawn gizmos
             }
         }
     }
