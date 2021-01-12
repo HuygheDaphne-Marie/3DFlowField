@@ -29,6 +29,9 @@ public class FlowField : MonoBehaviour
 
         CreateFlowField();
         CreateCostField();
+
+        // TEMP
+        CreateIntegrationField(CellFromWorldPos(player.transform.position));
     }
 
     void CreateFlowField()
@@ -94,9 +97,9 @@ public class FlowField : MonoBehaviour
                     // impassible
                     continue;
                 }
-                if (neighbor.cost + currentCell.cost < neighbor.bestCost)
+                if (neighbor.cost + currentCell.bestCost < neighbor.bestCost)
                 {
-                    neighbor.bestCost = (uint)(neighbor.cost + currentCell.cost);
+                    neighbor.bestCost = (uint)(neighbor.cost + currentCell.bestCost);
                     openQueue.Enqueue(neighbor);
                 }
             }
@@ -166,15 +169,20 @@ public class FlowField : MonoBehaviour
         if(cells != null)
         {
             Cell playerCell = CellFromWorldPos(player.transform.position);
-            bool firstCell = true;
+            //bool firstCell = true;
             foreach (Cell cell in cells)
             {
                 Color cellColor = Color.white;
-                cellColor.a = 0.001f;
+                cellColor.a = 0.01f;
 
                 if (cell.cost == byte.MaxValue)
                 {
                     cellColor = Color.red;
+                }
+                else if(cell.cost > 1)
+                {
+                    cellColor = Color.yellow;
+                    cellColor.a = 0.5f;
                 }
 
                 // TEMP
@@ -182,11 +190,11 @@ public class FlowField : MonoBehaviour
                 {
                     cellColor = Color.cyan;
                 }
-                if (firstCell)
-                {
-                    cellColor = Color.yellow;
-                    firstCell = false;
-                }
+                //if (firstCell)
+                //{
+                //    cellColor = Color.yellow;
+                //    firstCell = false;
+                //}
 
                 Gizmos.color = cellColor;
 
