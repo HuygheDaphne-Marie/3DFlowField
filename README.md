@@ -11,12 +11,12 @@
 
 ## What are flowfields commonly used for?
  Flowfields in games are most commonly used for efficient crowd pathfinding, situations where a large group of units/agents need to move towards a common destination. 
- ![RTS example](https://tyskwo.com/assets/images/portfolio/2015/flow-field-pathfinding/feature.png)
+ ![RTS example](https://tyskwo.com/assets/images/portfolio/2015/flow-field-pathfinding/feature.png)  
  *Source: https://tyskwo.com/work/91_flow-field-pathfinding/*
  
  They can also be used in racing games, where the flow field points towards the best path to take on a race track. Flowfields can also be used to generate curves which could then be generated and displayed visually as art.
  ![Art 1](https://images.squarespace-cdn.com/content/v1/5c12933f365f02733c923e4e/1580788110303-VLBVW9I9EHKF4APSFZUK/ke17ZwdGBToddI8pDm48kLPswmMOqQZ9-Q6KHLjvbpZ7gQa3H78H3Y0txjaiv_0fDoOvxcdMmMKkDsyUqMSsMWxHk725yiiHCCLfrh8O1z5QPOohDIaIeljMHgDF5CVlOqpeNLcJ80NK65_fV7S1UTcpTqfU-ZEsztPyQLxhSSK-PhJjRDDFQG0l3_ZnmWi1QjT9byXZM3ISxo3y1NRptg/long-curves.jpg?format=750w)
- ![Art 2](https://images.squarespace-cdn.com/content/v1/5c12933f365f02733c923e4e/1580788231770-ESX9MD7L5YN3DE7J7JCW/ke17ZwdGBToddI8pDm48kEY24XRp8jv9M12bso-nFLUUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYxCRW4BPu10St3TBAUQYVKc6BM6kmiMikd-H1LQ4OOAeC1Z164ihj-qzUVOZU_yAZfy50s-qPI76RWVQvQuQiOr/unfenced-existence.png?format=750w)
+ ![Art 2](https://images.squarespace-cdn.com/content/v1/5c12933f365f02733c923e4e/1580788231770-ESX9MD7L5YN3DE7J7JCW/ke17ZwdGBToddI8pDm48kEY24XRp8jv9M12bso-nFLUUqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYxCRW4BPu10St3TBAUQYVKc6BM6kmiMikd-H1LQ4OOAeC1Z164ihj-qzUVOZU_yAZfy50s-qPI76RWVQvQuQiOr/unfenced-existence.png?format=750w)  
  *Source: https://tylerxhobbs.com/essays/2020/flow-fields*
  
  Dynamic Flowfields can also change on their own over time resulting in a different output for a single input, this is used to simulate fluid flows for instance. Lastly a Flowfield can also be used to simulate how sound would travel in a space, by setting the target of a Flowfield to the source of a sound and then inverting the vectors leading to it you can get the direction sound would travel in a space.
