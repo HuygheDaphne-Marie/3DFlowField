@@ -26,6 +26,13 @@
  
  Then once the flowfield is generated and it's cell's directions have been calculated an `AgentController` spawns a set number of agents in which will follow the flowfield towards the target as a demonstation.
  
+## Result
+ The 3D flowfield works well and in the end is not too different from a 2D implementation. Most 2D things such as grid, vectors, positions & directions just become 3D versions and the cost calculations remain the same. One disadvantage is the significant amount of cells created due to the flowfield being in 3D space instead of 2D, every hight layer adds a significant amount of cells. For the current 'smaller' implementation some 12000 cells are made but performance is still good in debug mode.
+ 
+## Conclusion
+ 3D Flowfields seem to have interesting uses when used in 3D space, such as sound simulation. Though for pathfinding of flying agents the large amount of cells in a bigger space could result in a large drop in performance. A flowfield using a quadtree implementation might be able to relieve some of this strain, since it could have much larger cells for big open spaces. But at this time I do not know if such a thing would even be possible in a flowfield.
+ Simulation of sound using flowfields has caught my interest however and sound simulation in a 3D space could be interesting to research next.
+ 
 ## Controls
  The Unity project (Unity 2019.4.17f1) in this repository has some controls which are listed below:
  ### For AgentController.cs  
@@ -37,4 +44,3 @@
  `V`, toggles display of cell's their direction vectors **Warning! Somewhat laggy**  
  `B`, toggles display of rough (yellow) and impassible (red) cells
  
-
