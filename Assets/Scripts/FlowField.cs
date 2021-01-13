@@ -30,9 +30,7 @@ public class FlowField : MonoBehaviour
         CreateCellGrid();
         CreateCostField();
 
-        // TEMP
-        CreateIntegrationField(CellFromWorldPos(player.transform.position));
-        CreateFlowField();
+        // CalculateFlowField();
     }
 
     void CreateCellGrid()
@@ -81,7 +79,7 @@ public class FlowField : MonoBehaviour
     {
         destinationCell = _destinationCell;
 
-        destinationCell.cost = 0;
+        //destinationCell.cost = 0;
         destinationCell.bestCost = 0;
 
         Queue<Cell> openQueue = new Queue<Cell>();
@@ -97,9 +95,11 @@ public class FlowField : MonoBehaviour
                 {
                     continue;
                 }
-                if (neighbor.cost + currentCell.bestCost < neighbor.bestCost)
+
+                uint newBestCost = (uint)(neighbor.cost + currentCell.bestCost);
+                if (newBestCost < neighbor.bestCost)
                 {
-                    neighbor.bestCost = (uint)(neighbor.cost + currentCell.bestCost);
+                    neighbor.bestCost = newBestCost;
                     openQueue.Enqueue(neighbor);
                 }
             }
@@ -134,6 +134,27 @@ public class FlowField : MonoBehaviour
         }
     }
 
+    public void CalculateFlowField()
+    {
+        CreateIntegrationField(CellFromWorldPos(player.transform.position));
+        CreateFlowField();
+        CheckValid();
+    }
+
+    void CheckValid()
+    {
+        foreach(Cell cell in cells)
+        {
+            if(IsCellTraverseable(cell))
+            {
+                if(cell.bestDirection == Vector3.zero && cell.coordinates != new Vector3(0,0,0))
+                {
+                    print("Not poggers");
+                    return;
+                }
+            }
+        }
+    }
 
     public Cell CellFromWorldPos(Vector3 _worldPos)
     {
@@ -155,14 +176,14 @@ public class FlowField : MonoBehaviour
         Vector3Int bottomLeftBack = new Vector3Int(oldCoords.x - 1, oldCoords.y - 1, oldCoords.z - 1);
         Vector3Int topRightFront = new Vector3Int(oldCoords.x + 1, oldCoords.y + 1, oldCoords.z + 1);
 
-        for (int x = bottomLeftBack.x; x < topRightFront.x; x++)
+        for (int x = bottomLeftBack.x; x <= topRightFront.x; x++)
         {
-            for (int y = bottomLeftBack.y; y < topRightFront.y; y++)
+            for (int y = bottomLeftBack.y; y <= topRightFront.y; y++)
             {
-                for (int z = bottomLeftBack.z; z < topRightFront.z; z++)
+                for (int z = bottomLeftBack.z; z <= topRightFront.z; z++)
                 {
                     Vector3Int neighborCoords = new Vector3Int(x, y, z);
-                    if (neighborCoords != _cellToGetNeighborsOf.coordinates && IsCellPosWithinBounds(neighborCoords))
+                    if (IsCellPosWithinBounds(neighborCoords) && cells[x,y,z] != _cellToGetNeighborsOf)
                     {
                         neighbours.Add(cells[x, y, z]);
                     }
@@ -190,7 +211,7 @@ public class FlowField : MonoBehaviour
     }
     bool IsCellTraverseable(Cell _cellToCheck)
     {
-        return _cellToCheck.cost == byte.MaxValue;
+        return _cellToCheck.cost != byte.MaxValue;
     }
     public Cell GetRandomTraverseableCell(int maxAttempts = 10)
     {
@@ -223,15 +244,15 @@ public class FlowField : MonoBehaviour
                 Color cellColor = Color.white;
                 cellColor.a = 0.01f;
 
-                if (cell.cost == byte.MaxValue)
-                {
-                    cellColor = Color.red;
-                }
-                else if(cell.cost > 1)
-                {
-                    cellColor = Color.yellow;
-                    cellColor.a = 0.5f;
-                }
+                //if (cell.cost == byte.MaxValue)
+                //{
+                //    cellColor = Color.red;
+                //}
+                //else if(cell.cost > 1)
+                //{
+                //    cellColor = Color.yellow;
+                //    cellColor.a = 0.5f;
+                //}
 
                 // TEMP
                 if (cell == playerCell)
@@ -244,13 +265,18 @@ public class FlowField : MonoBehaviour
                 //    firstCell = false;
                 //}
 
-                Gizmos.color = cellColor;
+                if (IsCellTraverseable(cell) && cell.bestDirection == Vector3.zero)
+                {
+                    cellColor = Color.cyan;
+                    cellColor.a = 0.1f;
+                }
 
+                Gizmos.color = cellColor;
                 Gizmos.DrawCube(cell.worldPos, Vector3.one * (cellDiameter - 0.1f));
 
                 //Gizmos.color = Color.cyan;
-                //Gizmos.DrawLine(cell.worldPos, cell.worldPos + (cell.bestDirection * 0.1f)); 
-                // seems to not draw a line for each cell? might be reaching some cap of drawn gizmos
+                //Gizmos.DrawLine(cell.worldPos, cell.worldPos + (cell.bestDirection * 0.1f));
+                //seems to not draw a line for each cell? might be reaching some cap of drawn gizmos
             }
         }
     }

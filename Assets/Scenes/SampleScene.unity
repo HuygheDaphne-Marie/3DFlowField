@@ -296,10 +296,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c4534609f7966c4d8fe77c60046de01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  flowField: {fileID: 0}
-  agentPrefab: {fileID: 0}
-  agentsPerSpawn: 0
-  agentMoveSpeed: 0
+  flowField: {fileID: 106424823}
+  agentPrefab: {fileID: 567986311243389408, guid: 2afdf46f9f70383449da9d095dcd7ebd,
+    type: 3}
+  agentsPerSpawn: 5
+  agentMoveSpeed: 1
   activeAgents: []
 --- !u!4 &523316210
 Transform:

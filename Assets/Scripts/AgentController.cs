@@ -15,16 +15,29 @@ public class AgentController : MonoBehaviour
     void Start()
     {
         activeAgents = new List<GameObject>();
+
+        // TEMP
+        flowField.CalculateFlowField();
+        SpawnAgents();
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (flowField == null)
+        {
+            return;
+        }
+
         HandleInput();
 
         foreach (GameObject agent in activeAgents)
         {
+            Cell agentCell = flowField.CellFromWorldPos(agent.transform.position);
+            Vector3 moveDirection = agentCell.bestDirection;
 
+            Rigidbody agentRigidBody = agent.GetComponent<Rigidbody>();
+            agentRigidBody.velocity = moveDirection * agentMoveSpeed;
         }
     }
 
@@ -45,12 +58,22 @@ public class AgentController : MonoBehaviour
         for(int i = 0; i < agentsPerSpawn; i++)
         {
             Cell randomCellToSpawnIn = flowField.GetRandomTraverseableCell();
-            //GameObject newAgent = agentPrefab.sp
-            //activeAgents.Add()
+            GameObject newAgent = Instantiate(agentPrefab);
+            newAgent.transform.parent = transform;
+            activeAgents.Add(newAgent);
+
+            if (randomCellToSpawnIn != null)
+            {
+                newAgent.transform.position = randomCellToSpawnIn.worldPos;
+            }
         }
     }
     void DestroyAgents()
     {
+        foreach(GameObject agent in activeAgents)
+        {
+            Destroy(agent);
+        }
         activeAgents.Clear();
     }
 }
