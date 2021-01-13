@@ -15,10 +15,9 @@ public class AgentController : MonoBehaviour
     void Start()
     {
         activeAgents = new List<GameObject>();
-
-        // TEMP
-        flowField.CalculateFlowField();
+        
         SpawnAgents();
+        SetRandomTarget();
     }
 
     // Update is called once per frame
@@ -36,13 +35,20 @@ public class AgentController : MonoBehaviour
             Cell agentCell = flowField.CellFromWorldPos(agent.transform.position);
             Vector3 moveDirection = agentCell.bestDirection;
 
-            Rigidbody agentRigidBody = agent.GetComponent<Rigidbody>();
-            agentRigidBody.velocity = moveDirection * agentMoveSpeed;
+            if (agentCell.bestDirection != Vector3.zero)
+            {
+                Rigidbody agentRigidBody = agent.GetComponent<Rigidbody>();
+                agentRigidBody.velocity = moveDirection * agentMoveSpeed;
+            }
         }
     }
 
     void HandleInput()
     {
+        if(Input.GetKeyDown(KeyCode.R))
+        {
+            SetRandomTarget();
+        }
         if (Input.GetKeyDown(KeyCode.UpArrow))
         {
             SpawnAgents();
@@ -53,6 +59,15 @@ public class AgentController : MonoBehaviour
         }
     }
 
+    void SetRandomTarget()
+    {
+        flowField.ResetFlowField();
+        Cell randomCell = flowField.GetRandomTraverseableCell();
+        if (randomCell != null)
+        {
+            flowField.CalculateFlowField(randomCell.worldPos);
+        }
+    }
     void SpawnAgents()
     {
         for(int i = 0; i < agentsPerSpawn; i++)

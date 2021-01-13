@@ -4,21 +4,20 @@ using UnityEngine;
 
 public class FlowField : MonoBehaviour
 {
-    // TEMP
-    public GameObject player;
-
     public LayerMask nonTraverseableMask;
     public LayerMask difficultTerrainMask;
 
     public Vector3 flowFieldWorldSize;
     public float cellRadius;
+    float cellDiameter;
     Cell[,,] cells;
     public Cell destinationCell;
 
     Vector3Int flowFieldGridSize;
     Vector3 flowFieldBottomLeft;
 
-    float cellDiameter;
+    bool showBestDirectionVectors = false;
+    bool showCollisionBlocks = false;
 
     void Start()
     {
@@ -29,10 +28,9 @@ public class FlowField : MonoBehaviour
 
         CreateCellGrid();
         CreateCostField();
-
-        // CalculateFlowField();
     }
 
+    // Flowfield Creation & Path Calculation //
     void CreateCellGrid()
     {
         cells = new Cell[flowFieldGridSize.x, flowFieldGridSize.y, flowFieldGridSize.z];
@@ -78,8 +76,6 @@ public class FlowField : MonoBehaviour
     void CreateIntegrationField(Cell _destinationCell)
     {
         destinationCell = _destinationCell;
-
-        //destinationCell.cost = 0;
         destinationCell.bestCost = 0;
 
         Queue<Cell> openQueue = new Queue<Cell>();
@@ -105,7 +101,7 @@ public class FlowField : MonoBehaviour
             }
         }
     }
-    void CreateFlowField()
+    void CreateFlowField(Vector3 targetPos)
     {
         foreach(Cell cell in cells)
         {
@@ -115,6 +111,7 @@ public class FlowField : MonoBehaviour
             }
 
             uint lowestBestCost = uint.MaxValue;
+            float sqrDistanceToTarget = float.MaxValue;
             Cell bestNeighbor = null;
 
             List<Cell> neighbors = GetAdjacentCells(cell);
@@ -124,6 +121,17 @@ public class FlowField : MonoBehaviour
                 {
                     lowestBestCost = neighbor.bestCost;
                     bestNeighbor = neighbor;
+                    sqrDistanceToTarget = (targetPos - neighbor.worldPos).sqrMagnitude;
+                }
+                else if (neighbor.bestCost == lowestBestCost) 
+                {
+                    float newSqrDistance = (targetPos - neighbor.worldPos).sqrMagnitude;
+                    if (newSqrDistance < sqrDistanceToTarget)
+                    {
+                        lowestBestCost = neighbor.bestCost;
+                        bestNeighbor = neighbor;
+                        sqrDistanceToTarget = (targetPos - neighbor.worldPos).sqrMagnitude;
+                    }
                 }
             }
 
@@ -133,29 +141,21 @@ public class FlowField : MonoBehaviour
             }
         }
     }
-
-    public void CalculateFlowField()
+    public void CalculateFlowField(Vector3 _worldPos)
     {
-        CreateIntegrationField(CellFromWorldPos(player.transform.position));
-        CreateFlowField();
-        CheckValid();
+        CreateIntegrationField(CellFromWorldPos(_worldPos));
+        CreateFlowField(_worldPos);
     }
-
-    void CheckValid()
+    public void ResetFlowField()
     {
         foreach(Cell cell in cells)
         {
-            if(IsCellTraverseable(cell))
-            {
-                if(cell.bestDirection == Vector3.zero && cell.coordinates != new Vector3(0,0,0))
-                {
-                    print("Not poggers");
-                    return;
-                }
-            }
+            cell.bestCost = uint.MaxValue;
+            cell.bestDirection = Vector3.zero;
         }
     }
 
+    // Helpers // 
     public Cell CellFromWorldPos(Vector3 _worldPos)
     {
         Vector3 bottomLeftCellPos = flowFieldBottomLeft + Vector3.one * cellRadius;
@@ -231,52 +231,68 @@ public class FlowField : MonoBehaviour
         return cellToReturn;
     }
 
+    void Update()
+    {
+        HandleInput();
+    }
+    void HandleInput()
+    {
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            ToggleShowBestDirectionVectors();
+        }
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            ToggleShowCollisionBlocks();
+        }
+    }
+    void ToggleShowBestDirectionVectors()
+    {
+        showBestDirectionVectors = !showBestDirectionVectors;
+    }
+    void ToggleShowCollisionBlocks()
+    {
+        showCollisionBlocks = !showCollisionBlocks;
+    }
+
+
     void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position, flowFieldWorldSize);
 
         if(cells != null)
         {
-            Cell playerCell = CellFromWorldPos(player.transform.position);
-            //bool firstCell = true;
             foreach (Cell cell in cells)
             {
                 Color cellColor = Color.white;
                 cellColor.a = 0.01f;
 
-                //if (cell.cost == byte.MaxValue)
-                //{
-                //    cellColor = Color.red;
-                //}
-                //else if(cell.cost > 1)
-                //{
-                //    cellColor = Color.yellow;
-                //    cellColor.a = 0.5f;
-                //}
-
-                // TEMP
-                if (cell == playerCell)
+                if (showCollisionBlocks)
                 {
-                    cellColor = Color.cyan;
+                    if (!IsCellTraverseable(cell))
+                    {
+                        cellColor = Color.red;
+                    }
+                    else if (cell.cost > 1) // Rough Terrain
+                    {
+                        cellColor = Color.yellow;
+                        cellColor.a = 0.5f;
+                    }
                 }
-                //if (firstCell)
-                //{
-                //    cellColor = Color.yellow;
-                //    firstCell = false;
-                //}
 
-                if (IsCellTraverseable(cell) && cell.bestDirection == Vector3.zero)
+                if (cell == destinationCell)
                 {
                     cellColor = Color.cyan;
-                    cellColor.a = 0.1f;
                 }
 
                 Gizmos.color = cellColor;
                 Gizmos.DrawCube(cell.worldPos, Vector3.one * (cellDiameter - 0.1f));
 
-                //Gizmos.color = Color.cyan;
-                //Gizmos.DrawLine(cell.worldPos, cell.worldPos + (cell.bestDirection * 0.1f));
-                //seems to not draw a line for each cell? might be reaching some cap of drawn gizmos
+                if (showBestDirectionVectors)
+                {
+                    Gizmos.color = Color.cyan;
+                    Gizmos.DrawLine(cell.worldPos, cell.worldPos + (cell.bestDirection * 0.1f));
+                }
             }
         }
     }
